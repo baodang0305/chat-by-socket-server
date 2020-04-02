@@ -22,16 +22,16 @@ const chatBySocket = (io) => {
 
             socket.join(member.fID);
 
-            const usersRecent = await getUsersRecent(member.mEmail);
-            socket.emit("server-send-list-user-recent", usersRecent);
+            const usersActive = await getUsersActive(member.fID);
+            io.sockets.in(member.fID).emit("server-send-list-user-active", usersActive);
 
         });
 
         socket.on("client-request-content-messages", async ({ receiver, sender }) => {
             const chatSingle = await getChatSingle({"mEmailUser1": receiver.mEmail, "mEmailUser2": sender.mEmail});
             const { messages } = chatSingle;
-            io.to(receiver.mSocketID).emit("server-response-messages", messages);
-            socket.emit("server-response-messages", messages);
+            io.to(receiver.mSocketID).emit("server-response-messages-chat-single", messages);
+            socket.emit("server-response-messages-chat-single", messages);
         });
 
         socket.on("client-send-message", async (data) => {
@@ -57,8 +57,8 @@ const chatBySocket = (io) => {
             const chatSingle = await getChatSingle({"mEmailUser1": sender.mEmail, "mEmailUser2": receiver.mEmail});
             const { messages } = chatSingle; 
 
-            io.to(receiver.mSocketID).emit("server-response-messages", messages);
-            socket.emit("server-response-messages", messages);
+            io.to(receiver.mSocketID).emit("server-response-messages-chat-single", messages);
+            socket.emit("server-response-messages-chat-single", messages);
 
         });
 
@@ -67,7 +67,7 @@ const chatBySocket = (io) => {
 
             const chatGroup = await getFamilyGroup(member.fID);
             const { messages } = chatGroup;
-            io.to(member.fID).emit("server-response-messages", messages);
+            io.to(member.fID).emit("server-response-messages-chat-group", messages);
         });
 
         socket.on("client-request-send-list-user-active", async (fID) => {
