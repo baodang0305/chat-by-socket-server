@@ -30,8 +30,8 @@ const chatBySocket = (io) => {
         socket.on("client-request-content-messages", async ({ receiver, sender }) => {
             const chatSingle = await getChatSingle({"mEmailUser1": receiver.mEmail, "mEmailUser2": sender.mEmail});
             const { messages } = chatSingle;
-            io.to(receiver.mSocketID).emit("server-response-messages-chat-single", messages);
-            socket.emit("server-response-messages-chat-single", messages);
+            io.to(receiver.mSocketID).emit("server-response-messages-chat-single", { "user": sender, messages });
+            socket.emit("server-response-messages-chat-single", { "user": receiver, messages });
         });
 
         socket.on("client-send-message", async (data) => {
@@ -57,8 +57,8 @@ const chatBySocket = (io) => {
             const chatSingle = await getChatSingle({"mEmailUser1": sender.mEmail, "mEmailUser2": receiver.mEmail});
             const { messages } = chatSingle; 
 
-            io.to(receiver.mSocketID).emit("server-response-messages-chat-single", messages);
-            socket.emit("server-response-messages-chat-single", messages);
+            io.to(receiver.mSocketID).emit("server-response-messages-chat-single", { "user": sender, messages });
+            socket.emit("server-response-messages-chat-single", { "user": receiver, messages });
 
         });
 
