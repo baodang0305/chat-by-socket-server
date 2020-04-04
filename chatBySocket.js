@@ -18,7 +18,7 @@ const chatBySocket = (io) => {
 
             addUser(user);
 
-            addMemberChatGroup(user);
+            addMemberChatGroup(member);
 
             socket.join(member.fID);
 
