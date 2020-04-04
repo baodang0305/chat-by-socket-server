@@ -1,5 +1,3 @@
-//const { getFamily } = require("./family");
-
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
@@ -41,13 +39,10 @@ const addMemberChatGroup = async (member) => {
                                                            {"members": {"mName": member.mName, "mAvatar": member.mAvatar, "mEmail": member.mEmail}}});
         }
     } else {
-        //const family = await getFamily(member.fID);
         const chatGroup = {
             fID: member.fID,
-            // fName: family.fName,
-            // fAvatar: family.fAvatar,
-            fName: "Nguyễn",
-            fAvatar: "https://firebasestorage.googleapis.com/v0/b/looking-tutors-for-user.appspot.com/o/image%2Ffamily-img.png?alt=media&token=cc197bfb-737b-44ee-80cb-7535186e6e26",
+            fName: member.fName,
+            fAvatar: member.fAvatar,
             members: [{
                 mName: member.mName,
                 mAvatar: member.mAvatar,
