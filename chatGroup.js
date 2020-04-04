@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const chatGroupSchema = new Schema({
     fName: String,
     fID: String,
-    fAvatar: String,
+    fImage: String,
     members: [{
         mName: String,
         mEmail: String,
@@ -30,6 +30,7 @@ const checkMemberExist = async (fID, mEmail) => {
 }
 
 const addMemberChatGroup = async (member) => {
+    console.log(member)
     let result = null;
     const checkGroup = await checkGroupExist(member.fID);
     if (checkGroup) {
