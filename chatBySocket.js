@@ -82,7 +82,6 @@ const chatBySocket = (io) => {
 
         socket.on("client-request-send-family-group", async (fID) => {
             const familyGroup = await getFamilyGroup(fID);
-            console.log(familyGroup);
             io.to(fID).emit("server-send-family-group", familyGroup);
         });
 
