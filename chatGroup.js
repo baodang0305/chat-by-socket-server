@@ -42,7 +42,7 @@ const addMemberChatGroup = async (member) => {
         const chatGroup = {
             fID: member.fID,
             fName: member.fName,
-            fAvatar: member.fAvatar,
+            fImage: member.fImage,
             members: [{
                 mName: member.mName,
                 mAvatar: member.mAvatar,
