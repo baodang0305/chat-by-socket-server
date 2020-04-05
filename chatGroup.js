@@ -30,7 +30,6 @@ const checkMemberExist = async (fID, mEmail) => {
 }
 
 const addMemberChatGroup = async (member) => {
-    console.log(member)
     let result = null;
     const checkGroup = await checkGroupExist(member.fID);
     if (checkGroup) {
@@ -64,7 +63,7 @@ const addMessageChatGroup = async (member, message) => {
 }
 
 const getFamilyGroup = async (fID) => {
-    const familyGroup = await chatGroupModel.findOne({fID});
+    const familyGroup = await chatGroupModel.findOne({fID}, { messages: { $slice: -40 }} );
     return familyGroup;
 }
 

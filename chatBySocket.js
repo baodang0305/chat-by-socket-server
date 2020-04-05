@@ -29,9 +29,14 @@ const chatBySocket = (io) => {
 
         socket.on("client-request-content-messages", async ({ receiver, sender }) => {
             const chatSingle = await getChatSingle({"mEmailUser1": receiver.mEmail, "mEmailUser2": sender.mEmail});
-            const { messages } = chatSingle;
-            io.to(receiver.mSocketID).emit("server-response-messages-chat-single", { "user": sender, messages });
-            socket.emit("server-response-messages-chat-single", { "user": receiver, messages });
+
+            if(chatSingle) {
+               const { messages } = chatSingle;
+               socket.emit("server-response-messages-chat-single", { "user": receiver, messages });
+            } else {
+                socket.emit("server-response-messages-chat-single", { "user": receiver, "messages": null });
+            }
+            
         });
 
         socket.on("client-send-message", async (data) => {
@@ -72,7 +77,7 @@ const chatBySocket = (io) => {
 
         socket.on("client-request-send-list-user-active", async (fID) => {
             const usersActive = await getUsersActive(fID);
-            io.sockets.in(fID).emit("server-send-list-user-active", usersActive);
+            socket.emit("server-send-list-user-active", usersActive);
         });
 
         socket.on("client-request-send-list-user-recent", async (mEmail) => {
@@ -82,14 +87,32 @@ const chatBySocket = (io) => {
 
         socket.on("client-request-send-family-group", async (fID) => {
             const familyGroup = await getFamilyGroup(fID);
-            io.to(fID).emit("server-send-family-group", familyGroup);
+            socket.emit("server-send-family-group", familyGroup);
+        });
+
+        socket.on("client-notification-is-entering", ({ sender, receiver }) => {
+            if (!receiver.fName) {
+                io.to(receiver.mSocketID).emit("server-response-user-is-entering-to-partner", sender);
+            } else {
+                io.to(receiver.fID).emit("server-response-user-is-entering-to-group", sender);
+            }
+        });
+
+        socket.on("client-notification-is-stoped-entering", ({ sender, receiver }) => {
+            if (!receiver.fName) {
+                io.to(receiver.mSocketID).emit("server-response-user-is-stoped-entering-to-partner", sender);
+            } else {
+                io.to(receiver.fID).emit("server-response-user-is-stoped-entering-to-group", sender);
+            }
         });
 
         socket.on("disconnect", async() => {
 
             const user = await removeUser(socket.id);
-            const usersActive = await getUsersActive(user.fID);
-            io.sockets.in(user.fID).emit("server-send-list-user-active", usersActive);
+            if (user) {
+                const usersActive = await getUsersActive(user.fID);
+                io.sockets.in(user.fID).emit("server-send-list-user-active", usersActive);
+            }
     
         });
     });

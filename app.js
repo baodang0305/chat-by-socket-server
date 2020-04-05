@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require("cors");
+//const bcrypt = require("bcrypt");
 
 const indexRouter = require('./router/index');
 const chatBySocket = require('./chatBySocket');
@@ -14,9 +15,16 @@ const server = http.createServer(app);
 
 connectDB();
 
+// const hashPass = async () => {
+//     const hash = await bcrypt.hash("teo123", 10);
+//     console.log(hash);
+// }
+// hashPass();
+
+
 app.use(cors());
 app.use(indexRouter);
 const io = socketIo(server);
 chatBySocket(io);
 
-server.listen(PORT, ()=> console.log(`Server listen on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server listen on port ${PORT}`));
