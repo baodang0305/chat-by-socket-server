@@ -8,11 +8,17 @@ const chatGroupSchema = new Schema({
     members: [{
         mName: String,
         mEmail: String,
-        mAvatar: String
+        mAvatar: {
+            image: String,
+            color: String
+        }
     }],
     messages: [{
         name: String,
-        avatar: String,
+        avatar: {
+            image: String,
+            color: String
+        },
         message: String
     }]
 }, { collection: "chats-group" });
@@ -36,7 +42,7 @@ const addMemberChatGroup = async (member) => {
         const lengthMembers = await checkMemberExist(member.fID, member.mEmail);
         if (lengthMembers === 0) {
             result = await chatGroupModel.findOneAndUpdate({"fID": member.fID}, {$push: 
-                                                           {"members": {"mName": member.mName, "mAvatar": member.mAvatar, "mEmail": member.mEmail}}});
+                                                           {"members": {"mName": member.mName, "mAvatar": {"image": member.mAvatar.image, "color": member.mAvatar.color }, "mEmail": member.mEmail}}});
         }
     } else {
         const chatGroup = {
@@ -45,7 +51,10 @@ const addMemberChatGroup = async (member) => {
             fImage: member.fImage,
             members: [{
                 mName: member.mName,
-                mAvatar: member.mAvatar,
+                mAvatar: {
+                    image: member.mAvatar.image,
+                    color: member.mAvatar.color
+                },
                 mEmail: member.mEmail
             }]
         }
@@ -57,7 +66,7 @@ const addMemberChatGroup = async (member) => {
 const addMessageChatGroup = async (member, message) => {
     
     const result = await chatGroupModel.findOneAndUpdate({"fID": member.fID},
-    {$push: {"messages": {"name": member.mName, "avatar": member.mAvatar, "message": message}}});
+    {$push: {"messages": {"name": member.mName, "avatar": {"image": member.mAvatar.image, "color": member.mAvatar.color}, "message": message}}});
        
     return result;
 }

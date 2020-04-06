@@ -8,12 +8,16 @@ const chatBySocket = (io) => {
         console.log("New client connected");
 
         socket.on("join", async (member) => {
+    
             const user = {
                 mSocketID: socket.id, 
                 mName: member.mName, 
                 mEmail: member.mEmail, 
                 fID: member.fID,
-                mAvatar: member.mAvatar
+                mAvatar: {
+                    image: member.mAvatar.image,
+                    color: member.mAvatar.color
+                }
             }
 
             addUser(user);
@@ -46,14 +50,20 @@ const chatBySocket = (io) => {
             const user1 = {
                 mName: sender.mName,
                 mEmail: sender.mEmail,
-                mAvatar: sender.mAvatar,
+                mAvatar: {
+                    image: sender.mAvatar.image,
+                    color: sender.mAvatar.color
+                },
                 fID: sender.fID
             }
 
             const user2 = {
                 mName: receiver.mName,
                 mEmail: receiver.mEmail,
-                mAvatar: receiver.mAvatar,
+                mAvatar: {
+                    image: receiver.mAvatar.image,
+                    color: receiver.mAvatar.color
+                },
                 fID: receiver.fID
             }
 

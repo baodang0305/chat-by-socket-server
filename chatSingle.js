@@ -8,19 +8,28 @@ const chatSingleSchema = new Schema({
     user1: {
         mName: String,
         mEmail: String,
-        mAvatar: String,
+        mAvatar: {
+            image: String,
+            color: String
+        },
         fID: String
     },
     user2: {
         mName: String,
         mEmail: String,
-        mAvatar: String,
+        mAvatar: {
+            image: String,
+            color: String
+        },
         fID: String
     },
     messages: [{
         name: String,
         message: String,
-        avatar: String
+        avatar: {
+            image: String,
+            color: String
+        }
     }]
 }, {collection: "chats-single"});
 
@@ -45,11 +54,11 @@ const addChatSingle = async (user1, user2, message) => {
 
     let chat;
     if (result === false) {
-        chat = await chatSingleModel.create({user1, user2, messages: [{"name": user1.mName, "avatar": user1.mAvatar, "message": message}]});
+        chat = await chatSingleModel.create({user1, user2, messages: [{"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color }, "message": message}]});
     } else if (result === "user1") {
-        chat = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user1.mEmail, "user2.mEmail": user2.mEmail}, {$push: {"messages": {"name": user1.mName, "avatar": user1.mAvatar, "message": message} }} )
+        chat = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user1.mEmail, "user2.mEmail": user2.mEmail}, {$push: {"messages": {"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color}, "message": message} }} )
     } else {
-        chat = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user2.mEmail, "user2.mEmail": user1.mEmail}, {$push: {"messages": {"name": user1.mName, "avatar": user1.mAvatar, "message": message} }} )
+        chat = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user2.mEmail, "user2.mEmail": user1.mEmail}, {$push: {"messages": {"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color}, "message": message} }} )
     }
     return chat;
 } 
