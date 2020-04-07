@@ -26,7 +26,7 @@ const chatBySocket = (io) => {
 
             socket.join(member.fID);
 
-            const usersActive = await getUsersActive(member.fID);
+            const usersActive = await getUsersActive({"mEmail": member.mEmail, "fID": member.fID});
             io.sockets.in(member.fID).emit("server-send-list-user-active", usersActive);
 
         });

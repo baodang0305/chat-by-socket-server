@@ -7,8 +7,8 @@ function addUser(user) {
     }
 }
 
-function getUsersActive(fID) {
-    const usersByfID = users.filter(userItem => userItem.fID === fID);
+function getUsersActive({ mEmail, fID }) {
+    const usersByfID = users.filter(userItem => ( userItem.fID === fID && userItem.mEmail !== mEmail ));
     return usersByfID;
 }
 
