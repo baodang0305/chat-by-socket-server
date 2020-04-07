@@ -9,6 +9,8 @@ const chatBySocket = (io) => {
 
         socket.on("join", async (member) => {
     
+            socket.join(member.fID);
+
             const user = {
                 mSocketID: socket.id, 
                 mName: member.mName, 
@@ -20,14 +22,14 @@ const chatBySocket = (io) => {
                 }
             }
 
-            addUser(user);
+            await addUser(user);
 
-            addMemberChatGroup(member);
+            users.map(userItem => {
+                const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": user.Item.fID});
+                io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
+            });
 
-            socket.join(member.fID);
-
-            const usersActive = await getUsersActive({"mEmail": member.mEmail, "fID": member.fID});
-            io.sockets.in(member.fID).emit("server-send-list-user-active", usersActive);
+            await addMemberChatGroup(member);
 
         });
 
