@@ -1,4 +1,4 @@
-const { addUser, getUsersActive, removeUser } = require("./user");
+const { users, addUser, getUsersActive, removeUser } = require("./user");
 const { addChatSingle, getChatSingle, getUsersRecent } = require("./chatSingle"); 
 const { addMemberChatGroup, getFamilyGroup, addMessageChatGroup } = require("./chatGroup");
 
