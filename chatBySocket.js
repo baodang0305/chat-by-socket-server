@@ -87,7 +87,7 @@ const chatBySocket = (io) => {
         });
 
         socket.on("client-request-send-list-user-active", async ({ mEmail, fID }) => {
-            const usersActive = await getUsersActive(mEmail, fID);
+            const usersActive = await getUsersActive({ mEmail, fID });
             socket.emit("server-send-list-user-active", usersActive);
         });
 
