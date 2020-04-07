@@ -25,7 +25,7 @@ const chatBySocket = (io) => {
             await addUser(user);
 
             users.map(async (userItem) => {
-                const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": user.Item.fID});
+                const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": userItem.fID});
                 io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
             });
 
