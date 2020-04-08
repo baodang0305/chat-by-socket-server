@@ -1,4 +1,4 @@
-const { users, addUser, getUsersActive, removeUser } = require("./user");
+const { addUser, getUsersActive, removeUser } = require("./user");
 const { addChatSingle, getChatSingle, getUsersRecent } = require("./chatSingle"); 
 const { addMemberChatGroup, getFamilyGroup, addMessageChatGroup } = require("./chatGroup");
 
@@ -22,14 +22,12 @@ const chatBySocket = (io) => {
                 }
             }
 
-            const listUsers = await addUser(user);
-
-            console.log(listUsers);
+            const users = await addUser(user);
 
             const listUsersActive = await getUsersActive({ "mEmail": user.mEmail, "fID": user.mEmail });
             socket.emit("server-send-list-user-active", listUsersActive);
 
-            listUsers.map(async (userItem) => {
+            users.map(async (userItem) => {
                 const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": userItem.fID});
                 io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
             });
@@ -136,12 +134,9 @@ const chatBySocket = (io) => {
 
             const users = await removeUser(socket.id);
 
-            console.log(users)
-
             if (users) {
                 users.map(async (userItem) => {
                     const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": userItem.fID});
-                    console.log(usersActive);
                     io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
                 });
             }

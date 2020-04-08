@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const { users } = require("./user");
+const { allUsers } = require("./user");
 
 const Schema = mongoose.Schema;
 
@@ -94,6 +94,7 @@ const getUsersRecent = async (mEmail) => {
     }
 
     let mSocketID;
+    const users = allUsers();
     const result = list.map(item => {
         mSocketID = ""
         for (let i = 0; i < users.length; i++) {
@@ -104,8 +105,6 @@ const getUsersRecent = async (mEmail) => {
         return ({...item,["mSocketID"]: mSocketID});
     });
 
-    console.log(result)
-  
     return result;
 }
 
