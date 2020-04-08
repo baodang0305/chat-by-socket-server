@@ -22,12 +22,14 @@ const chatBySocket = (io) => {
                 }
             }
 
-            await addUser(user);
+            const listUsers = await addUser(user);
+
+            console.log(listUsers);
 
             const listUsersActive = await getUsersActive({ "mEmail": user.mEmail, "fID": user.mEmail });
             socket.emit("server-send-list-user-active", listUsersActive);
 
-            users.map(async (userItem) => {
+            listUsers.map(async (userItem) => {
                 const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": userItem.fID});
                 io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
             });
@@ -119,12 +121,27 @@ const chatBySocket = (io) => {
             }
         });
 
-        socket.on("disconnect", async() => {
+        socket.on("leave-chat", async() => {
+            const users = await removeUser(socket.id);
 
-            const user = await removeUser(socket.id);
-            if (user) {
+            if (users) {
                 users.map(async (userItem) => {
                     const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": userItem.fID});
+                    io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
+                });
+            }
+        });
+
+        socket.on("disconnect", async() => {
+
+            const users = await removeUser(socket.id);
+
+            console.log(users)
+
+            if (users) {
+                users.map(async (userItem) => {
+                    const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": userItem.fID});
+                    console.log(usersActive);
                     io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
                 });
             }
