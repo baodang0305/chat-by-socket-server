@@ -83,14 +83,14 @@ const getUsersRecent = async (mEmail) => {
     let lengthList2 = list2.length;
 
     while (i < lengthList1 && j < lengthList2) {
-        list.push(list1[i++].user2);
-        list.push(list2[j++].user1);
+        list = [...list, list1[i++].user2];
+        list = [...list, list2[j++].user1];
     }
     while (i < lengthList1) {
-        list.push(list1[i++].user2);
+        list = [...list, list1[i++].user2];
     }
     while (j < lengthList2) {
-        list.push(list2[j++].user1);
+        list = [...list, list2[j++].user1];
     }
 
     let mSocketID;

@@ -23,7 +23,7 @@ const chatBySocket = (io) => {
             }
 
             await addUser(user);
-            
+
             const listUsersActive = await getUsersActive({ "mEmail": user.mEmail, "fID": user.mEmail });
             socket.emit("server-send-list-user-active", listUsersActive);
 
@@ -75,7 +75,6 @@ const chatBySocket = (io) => {
 
             const chatSingle = await getChatSingle({"mEmailUser1": sender.mEmail, "mEmailUser2": receiver.mEmail});
             const { messages } = chatSingle; 
-
             io.to(receiver.mSocketID).emit("server-response-messages-chat-single", { "partner": sender, messages });
             socket.emit("server-response-messages-chat-single", { "partner": receiver, messages });
 
@@ -124,8 +123,10 @@ const chatBySocket = (io) => {
 
             const user = await removeUser(socket.id);
             if (user) {
-                const usersActive = await getUsersActive(user.fID);
-                io.sockets.in(user.fID).emit("server-send-list-user-active", usersActive);
+                users.map(async (userItem) => {
+                    const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": userItem.fID});
+                    io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
+                });
             }
     
         });
