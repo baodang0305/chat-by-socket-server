@@ -24,6 +24,7 @@ const removeUser = (mSocketID) => {
 }
 
 module.exports = {
+    users,
     addUser,
     getUsersActive,
     removeUser

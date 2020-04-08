@@ -103,6 +103,8 @@ const getUsersRecent = async (mEmail) => {
         }
         return ({...item,["mSocketID"]: mSocketID});
     });
+
+    console.log(result)
   
     return result;
 }
