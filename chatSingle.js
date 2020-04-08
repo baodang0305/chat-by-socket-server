@@ -64,9 +64,9 @@ const addChatSingle = async (user1, user2, message) => {
 } 
 
 const getChatSingle = async ({mEmailUser1, mEmailUser2}) => {
-    let chat = await chatSingleModel.findOne({"user1.mEmail": mEmailUser1, "user2.mEmail": mEmailUser2}, { messages: { $slice: -40 }} );
+    let chat = await chatSingleModel.findOne({"user1.mEmail": mEmailUser1, "user2.mEmail": mEmailUser2}, { messages: { $slice: -20 }} );
     if (!chat) {
-        chat = await chatSingleModel.findOne({"user1.mEmail": mEmailUser2, "user2.mEmail": mEmailUser1}, { messages: { $slice: -40 }} );
+        chat = await chatSingleModel.findOne({"user1.mEmail": mEmailUser2, "user2.mEmail": mEmailUser1}, { messages: { $slice: -20 }} );
     }
     return chat;
 }

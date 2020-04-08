@@ -72,7 +72,7 @@ const addMessageChatGroup = async (member, message) => {
 }
 
 const getFamilyGroup = async (fID) => {
-    const familyGroup = await chatGroupModel.findOne({fID}, { messages: { $slice: -40 }} );
+    const familyGroup = await chatGroupModel.findOne({fID}, { messages: { $slice: -20 }} );
     return familyGroup;
 }
 
