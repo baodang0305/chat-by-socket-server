@@ -28,10 +28,6 @@ const chatBySocket = (io) => {
                 io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
             });
 
-            const usersRecent = await getUsersRecent(user.mEmail);
-            console.log(usersRecent)
-            socket.emit("server-send-list-user-recent", usersRecent);
-
             await addMemberChatGroup(member);
 
         });
