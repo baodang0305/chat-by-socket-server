@@ -21,16 +21,16 @@ const chatBySocket = (io) => {
                     color: member.mAvatar.color
                 }
             }
-
             const users = await addUser(user);
-
-            const listUsersActive = await getUsersActive({ "mEmail": user.mEmail, "fID": user.mEmail });
-            socket.emit("server-send-list-user-active", listUsersActive);
-            console.log(users);
+            
             users.map(async (userItem) => {
                 const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": userItem.fID});
                 io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
             });
+
+            const usersRecent = await getUsersRecent(user.mEmail);
+            console.log(usersRecent)
+            socket.emit("server-send-list-user-recent", usersRecent);
 
             await addMemberChatGroup(member);
 
@@ -43,6 +43,17 @@ const chatBySocket = (io) => {
                socket.emit("server-response-messages-chat-single", { "partner": receiver, messages });
             } else {
                 socket.emit("server-response-messages-chat-single", { "partner": receiver, "messages": null });
+            }
+            
+        });
+
+        socket.on("client-request-content-messages-filtered", async ({ receiver, sender }) => {
+            const chatSingle = await getChatSingle({"mEmailUser1": receiver.mEmail, "mEmailUser2": sender.mEmail});
+            if(chatSingle) {
+               const { messages } = chatSingle;
+               socket.emit("server-response-messages-chat-single-filtered", { "partner": receiver, messages });
+            } else {
+                socket.emit("server-response-messages-chat-single-filtered", { "partner": receiver, "messages": null });
             }
             
         });

@@ -1,6 +1,6 @@
 let users = [];
 
-function addUser(user) {
+function addUser(user){
     const findUser = users.find(userItem => userItem.mEmail === user.mEmail);
     if(!findUser) {
         users = [...users, user];
@@ -9,8 +9,8 @@ function addUser(user) {
 }
 
 function getUsersActive({ mEmail, fID }) {
-    const usersByfID = users.filter(userItem => ( userItem.fID === fID && userItem.mEmail !== mEmail ));
-    return usersByfID;
+    const usersActive = users.filter(userItem => ( userItem.fID === fID && userItem.mEmail !== mEmail ));
+    return usersActive;
 }
 
 const removeUser = (mSocketID) => {
@@ -24,12 +24,10 @@ const removeUser = (mSocketID) => {
 }
 
 const allUsers = () => {
-    console.log(users);
     return users;
 }
 
 module.exports = {
-    users,
     addUser,
     allUsers,
     removeUser,
