@@ -1,6 +1,6 @@
-const { addUser, getUsersActive, removeUser } = require("./user");
-const { addChatSingle, getChatSingle, getUsersRecent } = require("./chatSingle"); 
+const { addUser, removeUser } = require("./user");
 const { addMemberChatGroup, getFamilyGroup, addMessageChatGroup } = require("./chatGroup");
+const { addChatSingle, getChatSingle, getUsersRecent, getLastMessage, updateStateSeenMessage } = require("./chatSingle");
 
 const chatBySocket = (io) => {
     io.on("connection", socket => {
@@ -8,50 +8,49 @@ const chatBySocket = (io) => {
         console.log("New client connected");
 
         socket.on("join", async (member) => {
-    
+
             socket.join(member.fID);
 
             const user = {
-                mSocketID: socket.id, 
-                mName: member.mName, 
-                mEmail: member.mEmail, 
+                mSocketID: socket.id,
+                mName: member.mName,
+                mEmail: member.mEmail,
                 fID: member.fID,
                 mAvatar: {
                     image: member.mAvatar.image,
                     color: member.mAvatar.color
                 }
             }
+
             const users = await addUser(user);
-            
-            users.map(async (userItem) => {
-                const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": userItem.fID});
-                io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
-            });
+
+            let usersActive = [];
+            for (let i = 0; i < users.length; i++) {
+                if (users[i].fID === user.fID && users[i].mEmail !== user.mEmail) {
+                    let messages = [];
+                    let result = await getChatSingle({ "mEmailUser1": user.mEmail, "mEmailUser2": users[i].mEmail });
+                    if (result) {
+                        messages = result.messages;
+                    }
+                    const userActive = {...user, messages}
+                    const userActiveTemp = {...users[i], messages};
+                    usersActive = [...usersActive, userActiveTemp]
+
+                    //emit user mới tới các user còn lại
+                    io.to(users[i].mSocketID).emit("server-send-user-active", userActive);
+                }
+            }
+
+            //emit toàn bộ user hiện có tới user mới
+            socket.emit("server-send-list-user-active", usersActive);
+
+            const usersRecent = await getUsersRecent(user.mEmail);
+
+            //emit toàn bộ user recent tới user mới
+            socket.emit("server-response-list-user-recent", usersRecent);
 
             await addMemberChatGroup(member);
 
-        });
-
-        socket.on("client-request-content-messages", async ({ receiver, sender }) => {
-            const chatSingle = await getChatSingle({"mEmailUser1": receiver.mEmail, "mEmailUser2": sender.mEmail});
-            if(chatSingle) {
-               const { messages } = chatSingle;
-               socket.emit("server-response-messages-chat-single", { "partner": receiver, messages });
-            } else {
-                socket.emit("server-response-messages-chat-single", { "partner": receiver, "messages": null });
-            }
-            
-        });
-
-        socket.on("client-request-content-messages-filtered", async ({ receiver, sender }) => {
-            const chatSingle = await getChatSingle({"mEmailUser1": receiver.mEmail, "mEmailUser2": sender.mEmail});
-            if(chatSingle) {
-               const { messages } = chatSingle;
-               socket.emit("server-response-messages-chat-single-filtered", { "partner": receiver, messages });
-            } else {
-                socket.emit("server-response-messages-chat-single-filtered", { "partner": receiver, "messages": null });
-            }
-            
         });
 
         socket.on("client-send-message", async (data) => {
@@ -80,35 +79,25 @@ const chatBySocket = (io) => {
 
             await addChatSingle(user1, user2, message);
 
-            const chatSingle = await getChatSingle({"mEmailUser1": sender.mEmail, "mEmailUser2": receiver.mEmail});
-            const { messages } = chatSingle; 
-            io.to(receiver.mSocketID).emit("server-response-messages-chat-single", { "partner": sender, messages });
-            socket.emit("server-response-messages-chat-single", { "partner": receiver, messages });
+            const chatSingle = await getLastMessage({ "mEmailUser1": sender.mEmail, "mEmailUser2": receiver.mEmail });
+            const { messages } = chatSingle;
+
+            io.to(receiver.mSocketID).emit("server-response-message-chat-single", { "partner": sender, "lastMessage": messages[0] });
 
         });
 
-        socket.on("client-send-message-to-chat-group", async ({member, message}) => {
-            await addMessageChatGroup(member, message);
+        // socket.on("client-send-message-to-chat-group", async ({ member, message }) => {
+        //     await addMessageChatGroup(member, message);
 
-            const chatGroup = await getFamilyGroup(member.fID);
-            const { messages } = chatGroup;
-            io.to(member.fID).emit("server-response-messages-chat-group", messages);
-        });
+        //     const chatGroup = await getFamilyGroup(member.fID);
+        //     const { messages } = chatGroup;
+        //     io.to(member.fID).emit("server-response-messages-chat-group", messages);
+        // });
 
-        socket.on("client-request-send-list-user-active", async ({ mEmail, fID }) => {
-            const usersActive = await getUsersActive({ mEmail, fID });
-            socket.emit("server-send-list-user-active", usersActive);
-        });
-
-        socket.on("client-request-send-list-user-recent", async (mEmail) => {
-            const usersRecent = await getUsersRecent(mEmail);
-            socket.emit("server-send-list-user-recent", usersRecent);
-        });
-
-        socket.on("client-request-send-family-group", async (fID) => {
-            const familyGroup = await getFamilyGroup(fID);
-            socket.emit("server-send-family-group", familyGroup);
-        });
+        // socket.on("client-request-send-family-group", async (fID) => {
+        //     const familyGroup = await getFamilyGroup(fID);
+        //     socket.emit("server-send-family-group", familyGroup);
+        // });
 
         socket.on("client-notification-is-entering", ({ sender, receiver }) => {
             if (!receiver.fName) {
@@ -126,28 +115,33 @@ const chatBySocket = (io) => {
             }
         });
 
-        socket.on("leave-chat", async() => {
-            const users = await removeUser(socket.id);
+        socket.on("message-has-seen", async ({ user, partner, message }) => {
+            const result = await updateStateSeenMessage(user, partner, message);
+            if (result) { 
+                console.log("cập nhật tin nhắn đã xem") 
+            } else { 
+                console.log("cập nhật tin nhắn đã xem thất bại")
+            }
+        });
 
+        socket.on("leave-chat", async () => {
+            const users = await removeUser(socket.id);
             if (users) {
                 users.map(async (userItem) => {
-                    const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": userItem.fID});
-                    io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
+                    io.to(userItem.mSocketID).emit("server-send-user-leave", {"mSocketID": socket.id});
                 });
             }
         });
 
-        socket.on("disconnect", async() => {
+        socket.on("disconnect", async () => {
 
             const users = await removeUser(socket.id);
-
             if (users) {
                 users.map(async (userItem) => {
-                    const usersActive = await getUsersActive({"mEmail": userItem.mEmail, "fID": userItem.fID});
-                    io.to(userItem.mSocketID).emit("server-send-list-user-active", usersActive);
+                    io.to(userItem.mSocketID).emit("server-send-user-leave", {"mSocketID": socket.id});
                 });
             }
-    
+
         });
     });
 }

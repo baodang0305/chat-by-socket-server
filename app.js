@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require("cors");
+const bodyParser = require('body-parser');
 //const bcrypt = require("bcrypt");
 
 const indexRouter = require('./router/index');
@@ -21,6 +22,11 @@ connectDB();
 // }
 // hashPass();
 
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json())
 
 app.use(cors());
 app.use(indexRouter);

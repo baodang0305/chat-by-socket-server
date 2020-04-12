@@ -1,16 +1,11 @@
 let users = [];
 
-function addUser(user){
+function addUser(user) {
     const findUser = users.find(userItem => userItem.mEmail === user.mEmail);
-    if(!findUser) {
+    if (!findUser) {
         users = [...users, user];
     }
     return users;
-}
-
-function getUsersActive({ mEmail, fID }) {
-    const usersActive = users.filter(userItem => ( userItem.fID === fID && userItem.mEmail !== mEmail ));
-    return usersActive;
 }
 
 const removeUser = (mSocketID) => {
@@ -31,5 +26,4 @@ module.exports = {
     addUser,
     allUsers,
     removeUser,
-    getUsersActive
 }

@@ -26,6 +26,7 @@ const chatSingleSchema = new Schema({
     messages: [{
         name: String,
         message: String,
+        seen: Boolean,
         avatar: {
             image: String,
             color: String
@@ -54,11 +55,11 @@ const addChatSingle = async (user1, user2, message) => {
 
     let chat;
     if (result === false) {
-        chat = await chatSingleModel.create({user1, user2, messages: [{"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color }, "message": message}]});
+        chat = await chatSingleModel.create({user1, user2, messages: [{"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color }, "message": message, "seen": false}]});
     } else if (result === "user1") {
-        chat = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user1.mEmail, "user2.mEmail": user2.mEmail}, {$push: {"messages": {"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color}, "message": message} }} )
+        chat = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user1.mEmail, "user2.mEmail": user2.mEmail}, {$push: {"messages": {"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color}, "message": message, "seen": false} }} )
     } else {
-        chat = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user2.mEmail, "user2.mEmail": user1.mEmail}, {$push: {"messages": {"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color}, "message": message} }} )
+        chat = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user2.mEmail, "user2.mEmail": user1.mEmail}, {$push: {"messages": {"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color}, "message": message, "seen": false} }} )
     }
     return chat;
 } 
@@ -71,100 +72,57 @@ const getChatSingle = async ({mEmailUser1, mEmailUser2}) => {
     return chat;
 }
 
+const getLastMessage = async ({mEmailUser1, mEmailUser2}) => {
+    let chat = await chatSingleModel.findOne({"user1.mEmail": mEmailUser1, "user2.mEmail": mEmailUser2}, { messages: { $slice: -1 }} );
+    if (!chat) {
+        chat = await chatSingleModel.findOne({"user1.mEmail": mEmailUser2, "user2.mEmail": mEmailUser1}, { messages: { $slice: -1 }} );
+    }
+    return chat;
+}
+
 const getUsersRecent = async (mEmail) => {
     let list = [];
     let i = 0;
     let j = 0;
-    const list1 = await chatSingleModel.find({"user1.mEmail": mEmail}, { messages: { $slice: -1 }} );
 
-    const list2 = await chatSingleModel.find({"user2.mEmail": mEmail}, { messages: { $slice: -1 }} );
+    const list1 = await chatSingleModel.find({"user1.mEmail": mEmail}, { messages: { $slice: -20 }} );
+    const list2 = await chatSingleModel.find({"user2.mEmail": mEmail}, { messages: { $slice: -20 }} );
 
     let lengthList1 = list1.length;
     let lengthList2 = list2.length;
-    let user1;
-    let user2;
+
+    let temp;
+    let messages;
 
     while (i < lengthList1 && j < lengthList2) {
 
-        user1 = {
-            "fID": list1[i].user2.fID, 
-            "mName": list1[i].user2.mName,
-            "mEmail": list1[i].user2.mEmail,
-            "mAvatar": {
-                "image": list1[i].user2.mAvatar.image,
-                "color": list1[i].user2.mAvatar.color
-            },
-            "lastMessage": {
-                "name": list1[i].messages[0].name, 
-                "avatar": {
-                    "image": list1[i].messages[0].avatar.image,
-                    "color": list1[i].messages[0].avatar.color
-                }, 
-                "message": list1[i].messages[0].message
-            }
-        }
+        temp = list1[i].user2;
+        messages = list1[i].messages;
+        temp = {...temp, messages}
 
-        user2 = {
-            "fID": list2[j].user1.fID, 
-            "mName": list2[j].user1.mName,
-            "mEmail": list2[j].user1.mEmail,
-            "mAvatar": {
-                "image": list2[j].user1.mAvatar.image,
-                "color": list2[j].user1.mAvatar.color
-            },
-            "lastMessage": {
-                "name": list2[j].messages[0].name, 
-                "avatar": {
-                    "image": list2[j].messages[0].avatar.image, 
-                    "color": list2[j].messages[0].avatar.color
-                },
-                "message": list2[j].messages[0].message
-            }
-        }
+        list = [...list, temp ]; i++;
 
-        list = [...list, user1 ]; i++;
-        list = [...list, user2 ]; j++;
+        temp = list2[j].user1;
+        messages = list2[j].messages;
+        temp = {...temp, messages};
+
+        list = [...list, temp ]; j++;
     }
+
     while (i < lengthList1) {
-        user1 = {
-            "fID": list1[i].user2.fID, 
-            "mName": list1[i].user2.mName,
-            "mEmail": list1[i].user2.mEmail,
-            "mAvatar": {
-                "image": list1[i].user2.mAvatar.image,
-                "color": list1[i].user2.mAvatar.color
-            },
-            "lastMessage": {
-                "name": list1[i].messages[0].name, 
-                "avatar": {
-                    "image": list1[i].messages[0].avatar.image,
-                    "color": list1[i].messages[0].avatar.color 
-                },
-                "message": list1[i].messages[0].message
-            }
-        }
-        list = [...list, user1 ]; 
-        i++;
+        temp = list1[i].user2;
+        messages = list1[i].messages;
+        temp = {...temp, messages}
+
+        list = [...list, temp ]; i++;
     }
+
     while (j < lengthList2) {
-        user2 = {
-            "fID": list2[j].user1.fID, 
-            "mName": list2[j].user1.mName,
-            "mEmail": list2[j].user1.mEmail,
-            "mAvatar": {
-                "image": list2[j].user1.mAvatar.image,
-                "color": list2[j].user1.mAvatar.color
-            },
-            "lastMessage": {
-                "name": list2[j].messages[0].name, 
-                "avatar": {
-                    "image": list2[j].messages[0].avatar.image,
-                    "color": list2[j].messages[0].avatar.color
-                }, 
-                "message": list2[j].messages[0].message
-            }
-        }
-        list = [...list, user2 ]; j++;
+        let temp = list2[j].user1;
+        let messages = list2[j].messages;
+        temp = {...temp, messages};
+
+        list = [...list, temp ]; j++;
     }
 
     let mSocketID;
@@ -182,9 +140,19 @@ const getUsersRecent = async (mEmail) => {
     return result;
 }
 
+const updateStateSeenMessage = async(user, partner, message) => {
+    let checkAndUpdate = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user.mEmail, "user2.mEmail": partner.mEmail, "messages._id": message._id}, {"$set": { "messages.$.seen": true }})
+    if (!checkAndUpdate) {
+        checkAndUpdate = await chatSingleModel.findOneAndUpdate({"user1.mEmail": partner.mEmail, "user2.mEmail": user.mEmail, "messages._id": message._id}, {"$set": { "messages.$.seen": true }})
+    }
+    return checkAndUpdate;
+}
+
 module.exports = {
     addChatSingle,
     getChatSingle,
     getUsersRecent,
-    chatSingleModel
+    getLastMessage,
+    chatSingleModel,
+    updateStateSeenMessage
 }
