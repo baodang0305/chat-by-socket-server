@@ -66,7 +66,7 @@ const addMemberChatGroup = async (member) => {
 const addMessageChatGroup = async (member, message) => {
     
     const result = await chatGroupModel.findOneAndUpdate({"fID": member.fID},
-    {$push: {"messages": {"name": member.mName, "avatar": {"image": member.mAvatar.image, "color": member.mAvatar.color}, "message": message}}});
+    {$push: {"messages": {"name": member.mName, "avatar": {"image": member.mAvatar.image, "color": member.mAvatar.color}, "message": message.message}}});
        
     return result;
 }

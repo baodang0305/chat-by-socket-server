@@ -17,11 +17,14 @@ exports.getNumberOfIncomingMessages = async (req, res) => {
 
     if (list2) {
         for (let j = 0; j < list2.length; j++) {
+            console.log(list2[j].messages)
+            console.log(list2[j].messages[list2[j].messages.length - 1].name);
+            console.log(user.mName)
             if (list2[j].messages[list2[j].messages.length - 1].seen === false && list2[j].messages[list2[j].messages.length - 1].name !== user.mName) {
                 number++;
             }
         }
     }
-
+    console.log(number)
     return res.send({ number });
 }

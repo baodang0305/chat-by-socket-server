@@ -141,6 +141,7 @@ const getUsersRecent = async (mEmail) => {
 }
 
 const updateStateSeenMessage = async(user, partner, message) => {
+    
     let checkAndUpdate = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user.mEmail, "user2.mEmail": partner.mEmail, "messages._id": message._id}, {"$set": { "messages.$.seen": true }})
     if (!checkAndUpdate) {
         checkAndUpdate = await chatSingleModel.findOneAndUpdate({"user1.mEmail": partner.mEmail, "user2.mEmail": user.mEmail, "messages._id": message._id}, {"$set": { "messages.$.seen": true }})

@@ -9,11 +9,9 @@ function addUser(user) {
 }
 
 const removeUser = (mSocketID) => {
-    let i = 0;
-    for (i = 0; i < users.length; i++) {
-        if (users[i].mSocketID === mSocketID) {
-            users.splice(i, 1);
-        }
+    const indexRemove = users.findIndex(element => element.mSocketID === mSocketID);
+    if (indexRemove !== -1) {
+        users.splice(indexRemove, 1);
     }
     return users;
 }

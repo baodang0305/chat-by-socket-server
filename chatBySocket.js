@@ -51,6 +51,10 @@ const chatBySocket = (io) => {
 
             await addMemberChatGroup(member);
 
+            //emit family group to client
+            const familyGroup = await getFamilyGroup(member.fID);
+            socket.emit("server-send-family-group", familyGroup);
+
         });
 
         socket.on("client-send-message", async (data) => {
@@ -86,18 +90,10 @@ const chatBySocket = (io) => {
 
         });
 
-        // socket.on("client-send-message-to-chat-group", async ({ member, message }) => {
-        //     await addMessageChatGroup(member, message);
-
-        //     const chatGroup = await getFamilyGroup(member.fID);
-        //     const { messages } = chatGroup;
-        //     io.to(member.fID).emit("server-response-messages-chat-group", messages);
-        // });
-
-        // socket.on("client-request-send-family-group", async (fID) => {
-        //     const familyGroup = await getFamilyGroup(fID);
-        //     socket.emit("server-send-family-group", familyGroup);
-        // });
+        socket.on("client-send-message-to-chat-group", async ({ member, message }) => {
+            await addMessageChatGroup(member, message);
+            io.to(member.fID).emit("server-response-messages-chat-group", message);
+        });
 
         socket.on("client-notification-is-entering", ({ sender, receiver }) => {
             if (!receiver.fName) {
@@ -118,7 +114,9 @@ const chatBySocket = (io) => {
         socket.on("message-has-seen", async ({ user, partner, message }) => {
             const result = await updateStateSeenMessage(user, partner, message);
             if (result) { 
-                console.log("cập nhật tin nhắn đã xem") 
+                console.log("cập nhật tin nhắn đã xem");
+                console.log(user)
+                io.to(partner.mSocketID).emit("server-response-message-has-seen", { "partner": user, message });
             } else { 
                 console.log("cập nhật tin nhắn đã xem thất bại")
             }
