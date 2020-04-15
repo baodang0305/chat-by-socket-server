@@ -7,7 +7,7 @@ const Schema = mongoose.Schema;
 const chatSingleSchema = new Schema({
     user1: {
         mName: String,
-        mEmail: String,
+        mID: String,
         mAvatar: {
             image: String,
             color: String
@@ -16,7 +16,7 @@ const chatSingleSchema = new Schema({
     },
     user2: {
         mName: String,
-        mEmail: String,
+        mID: String,
         mAvatar: {
             image: String,
             color: String
@@ -25,6 +25,7 @@ const chatSingleSchema = new Schema({
     },
     messages: [{
         name: String,
+        id: String,
         message: String,
         seen: Boolean,
         avatar: {
@@ -38,55 +39,56 @@ const chatSingleModel = mongoose.model("chatSingleModel", chatSingleSchema);
 
 const checkChatExist = async (user1, user2) => {
 
-    const chat1 = await chatSingleModel.findOne({"user1.mEmail": user1.mEmail, "user2.mEmail": user2.mEmail});
+    const chat1 = await chatSingleModel.findOne({"user1.mID": user1.mID, "user2.mID": user2.mID});
 
     if (chat1) { return "user1"; }
 
-    const chat2 = await chatSingleModel.findOne({"user1.mEmail": user2.mEmail, "user2.mEmail": user1.mEmail});
+    const chat2 = await chatSingleModel.findOne({"user1.mID": user2.mID, "user2.mID": user1.mID});
     
     if (chat2) { return "user2"; }
 
     return false;
 }
 
-const addChatSingle = async (user1, user2, message) => {
+const addChatSingle = async (user1, user2, messageContainer) => {
 
     const result = await checkChatExist(user1, user2);
 
     let chat;
     if (result === false) {
-        chat = await chatSingleModel.create({user1, user2, messages: [{"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color }, "message": message, "seen": false}]});
+        chat = await chatSingleModel.create({user1, user2, messages: [ messageContainer ]});
     } else if (result === "user1") {
-        chat = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user1.mEmail, "user2.mEmail": user2.mEmail}, {$push: {"messages": {"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color}, "message": message, "seen": false} }} )
+        chat = await chatSingleModel.findOneAndUpdate({"user1.mID": user1.mID, "user2.mID": user2.mID}, {$push: {"messages": messageContainer }} )
     } else {
-        chat = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user2.mEmail, "user2.mEmail": user1.mEmail}, {$push: {"messages": {"name": user1.mName, "avatar": {"image": user1.mAvatar.image, "color": user1.mAvatar.color}, "message": message, "seen": false} }} )
+        chat = await chatSingleModel.findOneAndUpdate({"user1.mID": user2.mID, "user2.mID": user1.mID}, {$push: {"messages": messageContainer }} )
     }
     return chat;
 } 
 
-const getChatSingle = async ({mEmailUser1, mEmailUser2}) => {
-    let chat = await chatSingleModel.findOne({"user1.mEmail": mEmailUser1, "user2.mEmail": mEmailUser2}, { messages: { $slice: -20 }} );
+const getChatSingle = async ({mIDUser1, mIDUser2}) => {
+    let chat = await chatSingleModel.findOne({"user1.mID": mIDUser1, "user2.mID": mIDUser2}, { messages: { $slice: -20 }} );
     if (!chat) {
-        chat = await chatSingleModel.findOne({"user1.mEmail": mEmailUser2, "user2.mEmail": mEmailUser1}, { messages: { $slice: -20 }} );
+        chat = await chatSingleModel.findOne({"user1.mID": mIDUser2, "user2.mID": mIDUser1}, { messages: { $slice: -20 }} );
     }
     return chat;
 }
 
-const getLastMessage = async ({mEmailUser1, mEmailUser2}) => {
-    let chat = await chatSingleModel.findOne({"user1.mEmail": mEmailUser1, "user2.mEmail": mEmailUser2}, { messages: { $slice: -1 }} );
+const getLastMessage = async ({mIDUser1, mIDUser2}) => {
+
+    let chat = await chatSingleModel.findOne({"user1.mID": mIDUser1, "user2.mID": mIDUser2}, { messages: { $slice: -1 }} );
     if (!chat) {
-        chat = await chatSingleModel.findOne({"user1.mEmail": mEmailUser2, "user2.mEmail": mEmailUser1}, { messages: { $slice: -1 }} );
+        chat = await chatSingleModel.findOne({"user1.mID": mIDUser2, "user2.mID": mIDUser1}, { messages: { $slice: -1 }} );
     }
     return chat;
 }
 
-const getUsersRecent = async (mEmail) => {
+const getUsersRecent = async (mID) => {
     let list = [];
     let i = 0;
     let j = 0;
 
-    const list1 = await chatSingleModel.find({"user1.mEmail": mEmail}, { messages: { $slice: -20 }} );
-    const list2 = await chatSingleModel.find({"user2.mEmail": mEmail}, { messages: { $slice: -20 }} );
+    const list1 = await chatSingleModel.find({"user1.mID": mID}, { messages: { $slice: -20 }} );
+    const list2 = await chatSingleModel.find({"user2.mID": mID}, { messages: { $slice: -20 }} );
 
     let lengthList1 = list1.length;
     let lengthList2 = list2.length;
@@ -130,7 +132,7 @@ const getUsersRecent = async (mEmail) => {
     const result = list.map(item => {
         mSocketID = ""
         for (let i = 0; i < users.length; i++) {
-            if (item.mEmail === users[i].mEmail) {
+            if (item.mID === users[i].mID) {
                
                 mSocketID = users[i].mSocketID
             }
@@ -140,11 +142,11 @@ const getUsersRecent = async (mEmail) => {
     return result;
 }
 
-const updateStateSeenMessage = async(user, partner, message) => {
+const updateStateSeenMessage = async(sender, receiver, messageContainer) => {
     
-    let checkAndUpdate = await chatSingleModel.findOneAndUpdate({"user1.mEmail": user.mEmail, "user2.mEmail": partner.mEmail, "messages._id": message._id}, {"$set": { "messages.$.seen": true }})
+    let checkAndUpdate = await chatSingleModel.findOneAndUpdate({"user1.mID": sender.mID, "user2.mID": receiver.mID, "messages._id": messageContainer._id}, {"$set": { "messages.$.seen": true }})
     if (!checkAndUpdate) {
-        checkAndUpdate = await chatSingleModel.findOneAndUpdate({"user1.mEmail": partner.mEmail, "user2.mEmail": user.mEmail, "messages._id": message._id}, {"$set": { "messages.$.seen": true }})
+        checkAndUpdate = await chatSingleModel.findOneAndUpdate({"user1.mID": receiver.mID, "user2.mID": sender.mID, "messages._id": messageContainer._id}, {"$set": { "messages.$.seen": true }})
     }
     return checkAndUpdate;
 }

@@ -16,6 +16,8 @@ const server = http.createServer(app);
 
 connectDB();
 
+// const Peer = require("peerjs");
+
 // const hashPass = async () => {
 //     const hash = await bcrypt.hash("teo123", 10);
 //     console.log(hash);

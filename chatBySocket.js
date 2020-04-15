@@ -2,6 +2,10 @@ const { addUser, removeUser } = require("./user");
 const { addMemberChatGroup, getFamilyGroup, addMessageChatGroup } = require("./chatGroup");
 const { addChatSingle, getChatSingle, getUsersRecent, getLastMessage, updateStateSeenMessage } = require("./chatSingle");
 
+// const uid = require("uid");
+
+// const config = { host: "https://chat-by-socket-server.herokuapp.com/", port: 3001, secure: true, key: "peerjs" }
+
 const chatBySocket = (io) => {
     io.on("connection", socket => {
 
@@ -11,10 +15,15 @@ const chatBySocket = (io) => {
 
             socket.join(member.fID);
 
+            // const getPeer = () => {
+            //     return uid(10);
+            // }
+
             const user = {
                 mSocketID: socket.id,
+                //peerID: getPeer(),
                 mName: member.mName,
-                mEmail: member.mEmail,
+                mID: member._id,
                 fID: member.fID,
                 mAvatar: {
                     image: member.mAvatar.image,
@@ -26,9 +35,9 @@ const chatBySocket = (io) => {
 
             let usersActive = [];
             for (let i = 0; i < users.length; i++) {
-                if (users[i].fID === user.fID && users[i].mEmail !== user.mEmail) {
+                if (users[i].fID === user.fID && users[i].mID !== user.mID) {
                     let messages = [];
-                    let result = await getChatSingle({ "mEmailUser1": user.mEmail, "mEmailUser2": users[i].mEmail });
+                    let result = await getChatSingle({ "mIDUser1": user.mID, "mIDUser2": users[i].mID });
                     if (result) {
                         messages = result.messages;
                     }
@@ -44,7 +53,7 @@ const chatBySocket = (io) => {
             //emit toàn bộ user hiện có tới user mới
             socket.emit("server-send-list-user-active", usersActive);
 
-            const usersRecent = await getUsersRecent(user.mEmail);
+            const usersRecent = await getUsersRecent(user.mID);
 
             //emit toàn bộ user recent tới user mới
             socket.emit("server-response-list-user-recent", usersRecent);
@@ -59,40 +68,33 @@ const chatBySocket = (io) => {
 
         socket.on("client-send-message", async (data) => {
 
-            const { receiver, sender, message } = data;
+            const { receiver, sender, messageContainer } = data;
 
             const user1 = {
-                mName: sender.mName,
-                mEmail: sender.mEmail,
-                mAvatar: {
-                    image: sender.mAvatar.image,
-                    color: sender.mAvatar.color
-                },
-                fID: sender.fID
+                "fID": sender.fID,
+                "mID": sender.mID,
+                "mName": sender.mName,
+                "mAvatar": { "image": sender.mAvatar.image, "color": sender.mAvatar.color }
             }
 
             const user2 = {
-                mName: receiver.mName,
-                mEmail: receiver.mEmail,
-                mAvatar: {
-                    image: receiver.mAvatar.image,
-                    color: receiver.mAvatar.color
-                },
-                fID: receiver.fID
+                "fID": receiver.fID,
+                "mID": receiver.mID,
+                "mName": receiver.mName,
+                "mAvatar": { "image": receiver.mAvatar.image, "color": receiver.mAvatar.color }
             }
 
-            await addChatSingle(user1, user2, message);
+            await addChatSingle(user1, user2, messageContainer);
 
-            const chatSingle = await getLastMessage({ "mEmailUser1": sender.mEmail, "mEmailUser2": receiver.mEmail });
+            const chatSingle = await getLastMessage({ "mIDUser1": sender.mID, "mIDUser2": receiver.mID });
             const { messages } = chatSingle;
-
-            io.to(receiver.mSocketID).emit("server-response-message-chat-single", { "partner": sender, "lastMessage": messages[0] });
+            io.to(receiver.mSocketID).emit("server-response-message-chat-single", { sender, "messageContainer": messages[0] });
 
         });
 
-        socket.on("client-send-message-to-chat-group", async ({ member, message }) => {
-            await addMessageChatGroup(member, message);
-            io.to(member.fID).emit("server-response-messages-chat-group", message);
+        socket.on("client-send-message-to-chat-group", async ({ member, messageContainer }) => {
+            await addMessageChatGroup(member, messageContainer);
+            io.to(member.fID).emit("server-response-messages-chat-group", messageContainer);
         });
 
         socket.on("client-notification-is-entering", ({ sender, receiver }) => {
@@ -111,16 +113,36 @@ const chatBySocket = (io) => {
             }
         });
 
-        socket.on("message-has-seen", async ({ user, partner, message }) => {
-            const result = await updateStateSeenMessage(user, partner, message);
+        socket.on("message-has-seen", async ({ sender, receiver, messageContainer }) => {
+            const result = await updateStateSeenMessage(sender, receiver, messageContainer);
             if (result) { 
                 console.log("cập nhật tin nhắn đã xem");
-                console.log(user)
-                io.to(partner.mSocketID).emit("server-response-message-has-seen", { "partner": user, message });
+                io.to(receiver.mSocketID).emit("server-response-message-has-seen", { sender, messageContainer });
             } else { 
                 console.log("cập nhật tin nhắn đã xem thất bại")
             }
         });
+
+        // socket.on("client-call", ({ stream, receiver }) => {
+
+        //     const peer = new Peer(receiver.peerID, config);
+
+        //     navigator.mediaDevices.getUserMedia({video: true, audio: true }, stream => {
+        //         const call = peer.call(receiver.peerID, stream);
+        //         call.on("stream", remoteStream => { 
+        //             io.to(receiver.mSocketID).emit("server-response-video-call", remoteStream);
+        //         });
+        //     });
+            
+        //     navigator.mediaDevices.getUserMedia({video: true, audio: true }, stream => {
+        //         peer.on("call", call => {
+        //             call.answer(stream);
+        //             call.on("stream", remoteStream => { 
+        //                 socket.emit("server-response-video-call", remoteStream);
+        //             });
+        //         });
+        //     })
+        // });
 
         socket.on("leave-chat", async () => {
             const users = await removeUser(socket.id);

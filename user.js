@@ -1,7 +1,7 @@
 let users = [];
 
 function addUser(user) {
-    const findUser = users.find(userItem => userItem.mEmail === user.mEmail);
+    const findUser = users.find(userItem => userItem.mID === user.mID);
     if (!findUser) {
         users = [...users, user];
     }
