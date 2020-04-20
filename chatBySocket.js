@@ -2,10 +2,6 @@ const { addUser, removeUser } = require("./user");
 const { addMemberChatGroup, getFamilyGroup, addMessageChatGroup } = require("./chatGroup");
 const { addChatSingle, getChatSingle, getUsersRecent, getLastMessage, updateStateSeenMessage } = require("./chatSingle");
 
-// const uid = require("uid");
-
-// const config = { host: "https://chat-by-socket-server.herokuapp.com/", port: 3001, secure: true, key: "peerjs" }
-
 const chatBySocket = (io) => {
     io.on("connection", socket => {
 
@@ -15,13 +11,8 @@ const chatBySocket = (io) => {
 
             socket.join(member.fID);
 
-            // const getPeer = () => {
-            //     return uid(10);
-            // }
-
             const user = {
                 mSocketID: socket.id,
-                //peerID: getPeer(),
                 mName: member.mName,
                 mID: member._id,
                 fID: member.fID,
@@ -41,8 +32,8 @@ const chatBySocket = (io) => {
                     if (result) {
                         messages = result.messages;
                     }
-                    const userActive = {...user, messages}
-                    const userActiveTemp = {...users[i], messages};
+                    const userActive = { ...user, messages }
+                    const userActiveTemp = { ...users[i], messages };
                     usersActive = [...usersActive, userActiveTemp]
 
                     //emit user mới tới các user còn lại
@@ -115,40 +106,33 @@ const chatBySocket = (io) => {
 
         socket.on("message-has-seen", async ({ sender, receiver, messageContainer }) => {
             const result = await updateStateSeenMessage(sender, receiver, messageContainer);
-            if (result) { 
+            if (result) {
                 console.log("cập nhật tin nhắn đã xem");
                 io.to(receiver.mSocketID).emit("server-response-message-has-seen", { sender, messageContainer });
-            } else { 
+            } else {
                 console.log("cập nhật tin nhắn đã xem thất bại")
             }
         });
 
-        // socket.on("client-call", ({ stream, receiver }) => {
 
-        //     const peer = new Peer(receiver.peerID, config);
+        socket.on("offer", ({ mSocketID, offer }) => {
+            io.to(mSocketID).emit("offer", { "mSocketID": socket.id, offer });
+        });
 
-        //     navigator.mediaDevices.getUserMedia({video: true, audio: true }, stream => {
-        //         const call = peer.call(receiver.peerID, stream);
-        //         call.on("stream", remoteStream => { 
-        //             io.to(receiver.mSocketID).emit("server-response-video-call", remoteStream);
-        //         });
-        //     });
-            
-        //     navigator.mediaDevices.getUserMedia({video: true, audio: true }, stream => {
-        //         peer.on("call", call => {
-        //             call.answer(stream);
-        //             call.on("stream", remoteStream => { 
-        //                 socket.emit("server-response-video-call", remoteStream);
-        //             });
-        //         });
-        //     })
-        // });
+        socket.on("answer", ({ mSocketID, answer }) => {
+            io.to(mSocketID).emit("answer", { "mSocketID": socket.id, answer });
+        });
+
+        socket.on("candidate", ({ mSocketID, candidate }) => {
+            io.to(mSocketID).emit("candidate", { "mSocketID": mSocketID, candidate });
+        });
+
 
         socket.on("leave-chat", async () => {
             const users = await removeUser(socket.id);
             if (users) {
                 users.map(async (userItem) => {
-                    io.to(userItem.mSocketID).emit("server-send-user-leave", {"mSocketID": socket.id});
+                    io.to(userItem.mSocketID).emit("server-send-user-leave", { "mSocketID": socket.id });
                 });
             }
         });
@@ -158,7 +142,7 @@ const chatBySocket = (io) => {
             const users = await removeUser(socket.id);
             if (users) {
                 users.map(async (userItem) => {
-                    io.to(userItem.mSocketID).emit("server-send-user-leave", {"mSocketID": socket.id});
+                    io.to(userItem.mSocketID).emit("server-send-user-leave", { "mSocketID": socket.id });
                 });
             }
 
