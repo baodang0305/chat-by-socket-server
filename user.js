@@ -16,6 +16,14 @@ const removeUser = (mSocketID) => {
     return users;
 }
 
+const getUserBySocketID = (mSocketID) => {
+    const indexUser = users.findIndex(element => element.mSocketID === mSocketID);
+    if (indexUser !== -1) {
+        return users[indexUser];
+    }
+    return null;
+}
+
 const allUsers = () => {
     return users;
 }
@@ -24,4 +32,5 @@ module.exports = {
     addUser,
     allUsers,
     removeUser,
+    getUserBySocketID
 }

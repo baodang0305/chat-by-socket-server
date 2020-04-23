@@ -1,4 +1,4 @@
-const { addUser, removeUser } = require("./user");
+const { addUser, removeUser, getUserBySocketID } = require("./user");
 const { addMemberChatGroup, getFamilyGroup, addMessageChatGroup } = require("./chatGroup");
 const { addChatSingle, getChatSingle, getUsersRecent, getLastMessage, updateStateSeenMessage } = require("./chatSingle");
 
@@ -114,8 +114,21 @@ const chatBySocket = (io) => {
             }
         });
 
+        socket.on("offer-a-call", async ( userIsOffer ) => {
+            const userOffer = await getUserBySocketID(socket.id);
+            io.to(userIsOffer.mSocketID).emit("offer-a-call", userOffer );
+        });
 
-        socket.on("offer", ({ mSocketID, offer }) => {
+        socket.on("cancel-offer-a-call", async ({ receiver }) => {
+            io.to(receiver.mSocketID).emit("cancel-offer-a-call");
+        });
+
+        socket.on("answer-offer-a-call", async ({ receiver, content }) => {
+            const sender = await getUserBySocketID(socket.id);
+            io.to(receiver.mSocketID).emit("answer-offer-a-call", { sender, content });
+        });
+
+        socket.on("offer", async ({ mSocketID, offer }) => {
             io.to(mSocketID).emit("offer", { "mSocketID": socket.id, offer });
         });
 
@@ -127,6 +140,10 @@ const chatBySocket = (io) => {
             io.to(mSocketID).emit("candidate", { "mSocketID": mSocketID, candidate });
         });
 
+        socket.on("close-call", ({ receiver }) => {
+            console.log(receiver)
+            io.to(receiver.mSocketID).emit("close-call");
+        });
 
         socket.on("leave-chat", async () => {
             const users = await removeUser(socket.id);
