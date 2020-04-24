@@ -137,7 +137,7 @@ const chatBySocket = (io) => {
         });
 
         socket.on("candidate", ({ mSocketID, candidate }) => {
-            io.to(mSocketID).emit("candidate", candidate );
+            io.to(mSocketID).emit({ "mSocketID": socket.id, candidate });
         });
 
         socket.on("close-call", ({ receiver }) => {
