@@ -5,17 +5,15 @@ const { addChatSingle, getChatSingle, getUsersRecent, getLastMessage, updateStat
 const chatBySocket = (io) => {
     io.on("connection", socket => {
 
-        console.log("New client connected");
-
         socket.on("join", async (member) => {
 
             socket.join(member.fID);
 
             const user = {
-                mSocketID: socket.id,
-                mName: member.mName,
                 mID: member._id,
                 fID: member.fID,
+                mName: member.mName,
+                mSocketID: socket.id,
                 mAvatar: {
                     image: member.mAvatar.image,
                     color: member.mAvatar.color
@@ -26,7 +24,7 @@ const chatBySocket = (io) => {
 
             let usersActive = [];
             for (let i = 0; i < users.length; i++) {
-                if (users[i].fID === user.fID && users[i].mID !== user.mID) {
+                if (users[i].fID === user.fID && users[i].mID !== user.mID ) {
                     let messages = [];
                     let result = await getChatSingle({ "mIDUser1": user.mID, "mIDUser2": users[i].mID });
                     if (result) {
@@ -42,12 +40,12 @@ const chatBySocket = (io) => {
             }
 
             //emit toàn bộ user hiện có tới user mới
-            socket.emit("server-send-list-user-active", usersActive);
+            socket.emit("server-send-list-users-active", usersActive);
 
             const usersRecent = await getUsersRecent(user.mID);
 
             //emit toàn bộ user recent tới user mới
-            socket.emit("server-response-list-user-recent", usersRecent);
+            socket.emit("server-send-list-users-recent", usersRecent);
 
             await addMemberChatGroup(member);
 
@@ -141,7 +139,6 @@ const chatBySocket = (io) => {
         });
 
         socket.on("close-call", ({ receiver }) => {
-            console.log(receiver)
             io.to(receiver.mSocketID).emit("close-call");
         });
 
@@ -155,7 +152,6 @@ const chatBySocket = (io) => {
         });
 
         socket.on("disconnect", async () => {
-
             const users = await removeUser(socket.id);
             if (users) {
                 users.map(async (userItem) => {
