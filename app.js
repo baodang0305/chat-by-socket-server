@@ -3,7 +3,6 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require("cors");
 const bodyParser = require('body-parser');
-//const bcrypt = require("bcrypt");
 
 const indexRouter = require('./router/index');
 const chatBySocket = require('./chatBySocket');
@@ -16,11 +15,11 @@ const server = http.createServer(app);
 
 connectDB();
 
-// const hashPass = async () => {
-//     const hash = await bcrypt.hash("teo123", 10);
-//     console.log(hash);
-// }
-// hashPass();
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "https://www.differentServerDomain.fr https://www.differentServerDomain.fr");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
