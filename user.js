@@ -1,3 +1,4 @@
+// list user
 let users = [];
 
 function addUser(user) {
